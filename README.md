@@ -102,7 +102,7 @@ Playwright артефактом. Pre-push hook выполняет только `
 - **Результаты:** ответ агентом-приложением в issue или PR и прогон в **Actions → opencode**.
 - **Действие:** `anomalyco/opencode/github` закреплён на коммите `77fc88c` (снимок 2026-11-23), раннер `ubuntu-latest`, checkout глубиной 1.
 - **Ограничение приложения:** GitHub App не имеет права `workflows`, поэтому изменения в `.github/workflows/` агент не пушит. Такие файлы применяются человеком или локальным агентом после ревью; остальные изменения агент делает сам.
-- **Ограничения запуска:** `timeout-minutes: 25`, `concurrency` по номеру issue/PR без отмены уже идущего прогона (`cancel-in-progress: false`), права `contents: read` и `id-token: write`, у checkout `persist-credentials: false`. Запись комментариев и ветки идёт через токен GitHub App из OIDC, а не через `GITHUB_TOKEN`.
+- **Ограничения запуска:** `timeout-minutes: 25`, `concurrency` по номеру issue/PR без отмены уже идущего прогона (`cancel-in-progress: false`), права `contents: read`, `issues: write` и `id-token: write`, у checkout `persist-credentials: false`. Запись комментариев и ветки идёт через токен GitHub App из OIDC, а не через `GITHUB_TOKEN`.
 
 Примеры вызова:
 
@@ -119,12 +119,12 @@ Playwright артефактом. Pre-push hook выполняет только `
 ### Автотриаж новых обращений
 
 - **Файл:** [`.github/workflows/opencode-triage.yml`](.github/workflows/opencode-triage.yml).
-- **Событие:** `issues: [opened]` — только новые обращения, повторные правки не запускают разбор.
-- **Кто запускает:** только `OWNER`, `MEMBER` и `COLLABORATOR`; боты игнорируются.
+- **Событие:** `issues: [opened]` — только новые обращения; правки и комментарии повторный разбор не запускают.
+- **Фильтр доверенных авторов:** job выполняется, только если автор — `OWNER`, `MEMBER` или `COLLABORATOR`, а не бот (`user.type != 'Bot'`). Остальные обращения остаются без автоматического разбора.
 - **Что пропускается:** issue с меткой `ready-for-agent` — это уже подготовленные `to-spec` и `to-tickets` тикеты, им повторный триаж не нужен.
-- **Что делает агент:** читает `AGENTS.md`, `docs/agents/`, `GLOSSARY.md` и ADR, работает по скиллу `triage`, проверяет дубли и существующую реализацию, предлагает категорию, состояние и следующий шаг. При нехватке данных задаёт конкретные вопросы и ставит `needs-info`; готовое обращение получает `ready-for-agent`. Код не меняет.
-- **Модель:** `deepseek/deepseek-flash`, ключ `DEEPSEEK_API_KEY`.
-- **Ограничения:** `timeout-minutes: 15`, `concurrency` по номеру issue, права `contents: read`, `issues: write`, `id-token: write`.
+- **Prompt:** задан прямо в workflow. Агент читает `AGENTS.md`, `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, `GLOSSARY.md` и `docs/adr/`, работает по скиллу `triage`, проверяет дубли среди открытых issue и существующую реализацию в коде и говорит, где искал. Предлагает категорию (`bug` или `enhancement`), состояние и следующий шаг: при нехватке данных задаёт конкретные вопросы и ставит `needs-info`, готовое обращение получает `ready-for-agent`, дубль или уже реализованное — `wontfix` с объяснением. Код не меняет, PR не создаёт, ответ начинает с дисклеймера из скилла `triage`.
+- **Модель и токены:** `deepseek/deepseek-flash`, `DEEPSEEK_API_KEY` и `GH_TOKEN` (`secrets.GITHUB_TOKEN`) — как в `opencode.yml`; действие `anomalyco/opencode/github` закреплено на том же коммите `77fc88c`.
+- **Ограничения:** `timeout-minutes: 15`, `concurrency` по номеру issue без отмены уже идущего прогона (`cancel-in-progress: false`), права `contents: read`, `issues: write` и `id-token: write`; у checkout `persist-credentials: false`.
 - **Результат:** комментарий от приложения в issue, метки трекера и прогон в **Actions → opencode-triage**.
 
 ## Деплой
