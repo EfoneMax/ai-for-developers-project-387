@@ -55,3 +55,30 @@ jobs:
             playwright-report/
           if-no-files-found: ignore
           retention-days: 7
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build image
+        run: docker build --tag call-booking:ci .
+
+      - name: Start image and check PORT
+        shell: bash
+        run: |
+          docker run --rm --detach --name call-booking-ci --publish 8080:8080 --env PORT=8080 call-booking:ci
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/api/health; then
+              exit 0
+            fi
+            echo "waiting for app: ${attempt}/30"
+            sleep 2
+          done
+          docker logs call-booking-ci
+          exit 1
+
+      - name: Stop container
+        if: always()
+        run: docker rm --force call-booking-ci 2>/dev/null || true
