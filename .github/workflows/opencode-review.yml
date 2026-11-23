@@ -67,7 +67,9 @@ jobs:
           ## Что проверено
           PROMPT
 
-          opencode run --model deepseek/deepseek-flash "$(cat review-prompt.md)" \
+          envsubst "\${PR} \${REPO} \${BASE_SHA} \${HEAD_SHA}" < review-prompt.md > review-prompt-final.md
+
+          opencode run --model deepseek/deepseek-flash "$(cat review-prompt-final.md)" \
             | sed -E 's/\x1B\[[0-9;]*[mK]//g' > review-body.md
 
           if [ ! -s review-body.md ]; then
