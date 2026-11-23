@@ -16,6 +16,9 @@ permissions:
   # gh публикует спецификацию и тикеты; job.if пропускает только доверенных авторов.
   # jactionlint ignore=excessive-permissions
   issues: write
+  # Отчёт limit_exhausted и правки описания PR; job.if отсекает недоверенных авторов.
+  # jactionlint ignore=excessive-permissions
+  pull-requests: write
   # OIDC нужен для обмена на токен GitHub App; job.if отсекает недоверенных авторов.
   # jactionlint ignore=excessive-permissions
   id-token: write
@@ -66,15 +69,15 @@ jobs:
 
           sha="$(gh pr view "$NUMBER" --json headRefOid --jq .headRefOid 2>/dev/null || echo "${GITHUB_SHA:-unknown}")"
           echo "allowed=false" >> "$GITHUB_OUTPUT"
-          gh issue comment "$NUMBER" --body "$(cat <<EOF
-          **limit_exhausted** — бюджет запусков агента на этот PR исчерпан.
-
-          Лимит: ${LIMIT} попыток. Последний SHA: \`${sha}\`.
-          Нужен человек: автоматические исправления остановлены.
-
-          [Лог прогона](${RUN_URL})
-          EOF
-          )"
+          {
+            echo "**limit_exhausted** — бюджет запусков агента на этот PR исчерпан."
+            echo
+            echo "Лимит: ${LIMIT} попыток. Последний SHA: \`${sha}\`."
+            echo "Нужен человек: автоматические исправления остановлены."
+            echo
+            echo "[Лог прогона](${RUN_URL})"
+          } > budget-comment.md
+          gh pr comment "$NUMBER" --body-file budget-comment.md
 
       - name: Checkout repository
         if: steps.budget.outputs.allowed == 'true'
