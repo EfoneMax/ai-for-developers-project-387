@@ -5,6 +5,7 @@
     ".github/workflows/hexlet-check.yml",
     "api/openapi/**",
     "web/src/client/**",
+    "CHANGELOG.md",
     "**/node_modules/**",
     "**/dist/**"
   ]
