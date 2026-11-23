@@ -46,6 +46,7 @@ npm run ui:add -- button  # добавить компонент shadcn/ui
 - `web/src/` — React-приложение.
 - `scripts/` — проверки целостности и commitlint.
 - `.github/workflows/opencode.yml` — агент OpenCode в Actions: запуск по `/oc` и `/opencode` в issue и ревью PR.
+- `.github/workflows/opencode-triage.yml` — автотриаж новых обращений по скиллу `triage`; готовые тикеты с `ready-for-agent` пропускаются.
 - `mise.toml` — версии инструментов, задачи, hooks и daemons.
 - `hk.pkl` — Git-хуки: линтер и форматтер, commitlint, проверки перед push.
 - `opencode.json` — MCP-серверы shadcn и Railway.

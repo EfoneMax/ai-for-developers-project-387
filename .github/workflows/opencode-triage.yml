@@ -1,0 +1,59 @@
+name: opencode-triage
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  # gh ставит метки и пишет triage-комментарий; фильтр ниже пропускает только доверенных авторов.
+  # jactionlint ignore=excessive-permissions
+  issues: write
+  # OIDC нужен для обмена на токен GitHub App; job.if отсекает недоверенных авторов.
+  # jactionlint ignore=excessive-permissions
+  id-token: write
+
+concurrency:
+  group: opencode-triage-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  triage:
+    if: |
+      github.event.issue.user.type != 'Bot' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
+      !contains(github.event.issue.labels.*.name, 'ready-for-agent')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Run OpenCode
+        uses: anomalyco/opencode/github@77fc88c8ade8e5a620ebbe1197f3a572d29ae91a # latest, 2026-11-23
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: deepseek/deepseek-flash
+          prompt: |
+            Ты triage-агент проекта «Календарь звонков». Разбери новое обращение в этом issue.
+
+            1. Прочитай AGENTS.md, docs/agents/issue-tracker.md, docs/agents/triage-labels.md,
+               GLOSSARY.md и docs/adr/.
+            2. Работай по скиллу triage. Проверь, нет ли уже такой реализации в коде и дубля
+               среди открытых issue; скажи, где искал.
+            3. Предложи категорию (bug или enhancement) и состояние (needs-triage, needs-info,
+               ready-for-agent, ready-for-human, wontfix) с обоснованием и следующим шагом.
+            4. Если данных не хватает, задай конкретные вопросы и поставь метку needs-info.
+            5. Если обращение понятно и готово к работе, подготовь краткий agent brief и
+               поставь метку ready-for-agent.
+            6. Если это дубль или уже реализовано, объясни это и поставь wontfix.
+            7. Код не меняй, PR не создавай. Ответь комментарием в issue и начни его с
+               дисклеймера из скилла triage.
+
+            Тикеты с меткой ready-for-agent уже подготовлены to-tickets: этот workflow их
+            пропускает, повторно не разбирай.

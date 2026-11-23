@@ -115,6 +115,17 @@ Playwright артефактом. Pre-push hook выполняет только `
 репозиторий, а `DEEPSEEK_API_KEY` добавлен в **Settings → Secrets and variables
 → Actions**.
 
+### Автотриаж новых обращений
+
+- **Файл:** [`.github/workflows/opencode-triage.yml`](.github/workflows/opencode-triage.yml).
+- **Событие:** `issues: [opened]` — только новые обращения, повторные правки не запускают разбор.
+- **Кто запускает:** только `OWNER`, `MEMBER` и `COLLABORATOR`; боты игнорируются.
+- **Что пропускается:** issue с меткой `ready-for-agent` — это уже подготовленные `to-spec` и `to-tickets` тикеты, им повторный триаж не нужен.
+- **Что делает агент:** читает `AGENTS.md`, `docs/agents/`, `GLOSSARY.md` и ADR, работает по скиллу `triage`, проверяет дубли и существующую реализацию, предлагает категорию, состояние и следующий шаг. При нехватке данных задаёт конкретные вопросы и ставит `needs-info`; готовое обращение получает `ready-for-agent`. Код не меняет.
+- **Модель:** `deepseek/deepseek-flash`, ключ `DEEPSEEK_API_KEY`.
+- **Ограничения:** `timeout-minutes: 15`, `concurrency` по номеру issue, права `contents: read`, `issues: write`, `id-token: write`.
+- **Результат:** комментарий от приложения в issue, метки трекера и прогон в **Actions → opencode-triage**.
+
 ## Деплой
 
 Публичная ссылка: **https://call-booking-production.up.railway.app**
