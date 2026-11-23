@@ -1,6 +1,6 @@
 name: opencode
 
-run-name: opencode pr-${{ github.event.issue.number || github.event.pull_request.number }}
+run-name: "opencode #${{ github.event.issue.number || github.event.pull_request.number }}"
 
 on:
   # Событие запускает агент только по команде доверенного автора: фильтр в job.if ниже.
@@ -54,7 +54,7 @@ jobs:
           fi
 
           used="$(gh api "repos/${REPO}/actions/workflows/opencode.yml/runs?per_page=100" \
-            | jq --arg title "opencode pr-${NUMBER}" --arg id "$RUN_ID" \
+            | jq --arg title "opencode #${NUMBER}" --arg id "$RUN_ID" \
               '[.workflow_runs[] | select(.display_title == $title and (.id | tostring) != $id) | .run_attempt] | add // 0')"
           total=$((used + RUN_ATTEMPT))
 
