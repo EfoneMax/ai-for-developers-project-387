@@ -40,7 +40,7 @@ jobs:
             fi
           fi
 
-          if [[ -n "$base" ]]; then
+          if [[ -n "$base" ]] && git merge-base --is-ancestor "$base" "$head"; then
             npx --no-install commitlint --from "$base" --to "$head"
           else
             npx --no-install commitlint --last
