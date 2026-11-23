@@ -365,6 +365,7 @@ describe("шаг контактов и подтверждение", () => {
         email: "anna@example.com",
         comment: "Позвонить заранее",
       },
+      timeZone: "Europe/Moscow",
     });
     expect(screen.getByTestId("confirmation-date").textContent).toBe("четверг, 12 ноября 2026");
     expect(screen.getByText(/13:00–13:30/)).toBeTruthy();
@@ -392,6 +393,7 @@ describe("шаг контактов и подтверждение", () => {
     expect(await screen.findByRole("heading", { name: "Вы записаны" })).toBeTruthy();
     expect(screen.getByText(/11:00–11:30/)).toBeTruthy();
     expect(screen.getByTestId("confirmation-time-zone").textContent).toBe("Europe/Berlin");
+    expect(createBooking).toHaveBeenCalledWith(expect.objectContaining({ timeZone: "Europe/Berlin" }));
   });
 
   it("проверяет обязательные поля и формат email до запроса", async () => {

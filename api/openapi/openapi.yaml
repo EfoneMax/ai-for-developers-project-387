@@ -493,6 +493,11 @@ components:
           allOf:
             - $ref: '#/components/schemas/Guest'
           description: Контактные данные гостя.
+        timeZone:
+          type: string
+          description: |-
+            Снимок часового пояса гостя в формате IANA (`Europe/Berlin`), в котором
+            гость выбирал слот (ADR-0007). Не возвращается, если пояс неизвестен.
       description: |-
         Бронь — подтверждённое гостем право занять слот вместе с контактами.
 
@@ -516,6 +521,12 @@ components:
           allOf:
             - $ref: '#/components/schemas/Guest'
           description: Контактные данные гостя.
+        timeZone:
+          type: string
+          description: |-
+            Необязательный часовой пояс гостя в формате IANA. Валидный пояс
+            сохраняется как снимок брони; отсутствующий, пустой или невалидный
+            игнорируется и не мешает созданию брони (ADR-0007).
       description: Поля создания брони.
     BookingList:
       type: object

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiError } from "@/lib/api-error";
+import { isTimeZone } from "@/features/slots/time-zone";
 import { createBooking } from "./api";
 import { formatIntervalInZone } from "./format";
 
@@ -119,6 +120,7 @@ export default function BookingContactsStep({
           email: guest.email.trim(),
           ...(comment === "" ? {} : { comment }),
         },
+        ...(isTimeZone(timeZone) ? { timeZone } : {}),
       });
 
       onBooked(booking);

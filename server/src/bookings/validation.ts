@@ -1,4 +1,5 @@
 import { parseUtcInstant } from "../domain/bookings.js";
+import { isTimeZone } from "../domain/time-zone.js";
 import {
   COMMENT_MAX_LENGTH,
   EMAIL_FORMAT,
@@ -19,6 +20,7 @@ interface CreateBookingInput {
     email: string;
     comment?: string;
   };
+  timeZone?: string;
 }
 
 /**
@@ -37,12 +39,34 @@ export function parseCreateBooking(body: unknown): ParseResult<CreateBookingInpu
   const meetingTypeId = parseMeetingTypeId(body.meetingTypeId, issues);
   const start = parseStart(body.start, issues);
   const guest = parseGuest(body.guest, issues);
+  const timeZone = parseTimeZone(body.timeZone);
 
   if (issues.length > 0) {
     return { ok: false, issues };
   }
 
-  return { ok: true, value: { meetingTypeId: meetingTypeId!, start: start!, guest: guest! } };
+  return {
+    ok: true,
+    value: {
+      meetingTypeId: meetingTypeId!,
+      start: start!,
+      guest: guest!,
+      ...(timeZone === undefined ? {} : { timeZone }),
+    },
+  };
+}
+
+/**
+ * Необязательный IANA-пояс гостя: валидное значение обрезается по краям,
+ * отсутствующее или мусорное просто не сохраняется и не даёт ошибки.
+ */
+function parseTimeZone(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return isTimeZone(trimmed) ? trimmed : undefined;
 }
 
 function parseMeetingTypeId(value: unknown, issues: ValidationIssue[]): string | undefined {
