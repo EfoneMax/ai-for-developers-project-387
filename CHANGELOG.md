@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/EfoneMax/ai-for-developers-project-387/compare/call-booking-v0.2.0...call-booking-v0.3.0) (2026-11-23)
+
+
+### Features
+
+* **ci:** добавить ежедневный аудит приложения ([28db6f4](https://github.com/EfoneMax/ai-for-developers-project-387/commit/28db6f43c6d3310ed304b54227b1cb8c0b40fad0)), closes [#17](https://github.com/EfoneMax/ai-for-developers-project-387/issues/17)
+
+
+### Bug Fixes
+
+* **ci:** подставлять PR и SHA в prompt авторевью ([485dca2](https://github.com/EfoneMax/ai-for-developers-project-387/commit/485dca25ba7f506465c4ad7384d080cd6848d0ba)), closes [#17](https://github.com/EfoneMax/ai-for-developers-project-387/issues/17)
+
 ## [0.2.0](https://github.com/EfoneMax/ai-for-developers-project-387/compare/call-booking-v0.1.0...call-booking-v0.2.0) (2026-11-23)
 
 
