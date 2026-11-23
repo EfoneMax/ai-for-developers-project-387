@@ -223,7 +223,7 @@ opencode mcp add railway --url https://mcp.railway.com
 `Allow GitHub Actions to create and approve pull requests`, иначе job `Release`
 упадёт при создании PR.
 
-После пуша в `main` workflow `Release` создаёт или обновляет pull request с новой версией в `package.json` и записью в `CHANGELOG.md`. Мерж этого PR создаёт тег `vX.Y.Z` и GitHub Release; вручную теги и релизы не создаются. `CHANGELOG.md` генерируется release-please и исключён из `oxfmt`, чтобы release-PR не падал на форматировании сгенерированного файла.
+После пуша в `main` workflow `Release` создаёт или обновляет pull request с новой версией в `package.json` и записью в `CHANGELOG.md`. Мерж этого PR создаёт тег `vX.Y.Z` и GitHub Release; вручную теги и релизы не создаются. `CHANGELOG.md` генерируется release-please и исключён из `oxfmt`, а сгенерированный коммит `chore(main): release ...` исключён из правила `references-empty` — у него нет футера `Refs:`.
 
 Пакеты `api`, `server` и `web` приватные: в npm ничего не публикуется, своих версий и релизов у них нет, workspace-версии не бампаются. Версия контракта в TypeSpec (`@info(version: "0.1.0")`) автоматически не меняется.
 
