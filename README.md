@@ -87,6 +87,32 @@ push в `main`: браузерный слой идёт после быстрых
 только Chromium, ограничен 25 минутами и при падении сохраняет трейсы
 Playwright артефактом. Pre-push hook выполняет только `mise run check`.
 
+## Агент в GitHub Actions
+
+В репозитории подключён [OpenCode GitHub](https://opencode.ai/docs/github):
+агент запускается из комментария и отвечает там же, от имени приложения.
+
+- **Файл:** [`.github/workflows/opencode.yml`](.github/workflows/opencode.yml).
+- **События:** `issue_comment` и `pull_request_review_comment`, только `types: [created]`.
+- **Команды:** `/oc` и `/opencode` (заданы явно в `mentions`).
+- **Кто может запускать:** только `OWNER`, `MEMBER` и `COLLABORATOR`; комментарии ботов и недоверенных авторов игнорируются. PR из fork не получают секреты.
+- **Модель:** `deepseek/deepseek-flash`; ключ хранится в GitHub Secrets как `DEEPSEEK_API_KEY` и в репозиторий не попадает.
+- **Назначение:** разбор issue и обсуждений, работа по скиллам из `.agents/skills/` (`to-spec`, `to-tickets`, `implement-spec`, `code-review`), правки в ветке PR.
+- **Результаты:** ответ агентом-приложением в issue или PR и прогон в **Actions → opencode**.
+- **Ограничения запуска:** `timeout-minutes: 25`, `concurrency` по номеру issue/PR, права `contents: read` и `id-token: write`, у checkout `persist-credentials: false`.
+
+Примеры вызова:
+
+```text
+/oc explain this issue
+/oc запусти скилл to-spec по обсуждению этого issue
+/oc запусти скилл implement-spec по этой спецификации
+```
+
+Перед первым запуском приложение OpenCode должно быть установлено на
+репозиторий, а `DEEPSEEK_API_KEY` добавлен в **Settings → Secrets and variables
+→ Actions**.
+
 ## Деплой
 
 Публичная ссылка: **https://call-booking-production.up.railway.app**
