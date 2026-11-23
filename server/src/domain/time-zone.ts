@@ -5,6 +5,24 @@
  */
 export const OWNER_TIME_ZONE = "Europe/Moscow";
 
+/**
+ * Проверяет, что строка — существующая зона IANA. Проверка через `Intl`
+ * не доверяет формату строки: принимаются только зоны, которые знает среда
+ * выполнения.
+ */
+export function isTimeZone(value: unknown): value is string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return false;
+  }
+
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const MS_PER_MINUTE = 60_000;
 
 const formatters = new Map<string, Intl.DateTimeFormat>();

@@ -35,7 +35,7 @@ async function createMeetingType(
 
 function book(
   app: ReturnType<typeof createApp>,
-  payload: { meetingTypeId: string; start: string; guest?: unknown },
+  payload: { meetingTypeId: string; start: string; guest?: unknown; timeZone?: unknown },
 ) {
   return app.inject({
     method: "POST",
@@ -123,6 +123,45 @@ describe("POST /api/bookings", () => {
       end: "2026-11-13T06:45:00.000Z",
       meetingType: { durationMinutes: 45 },
     });
+  });
+
+  it("сохраняет валидный IANA-пояс гостя и возвращает его в брони и списке", async () => {
+    const app = buildApp();
+    const meetingType = await createMeetingType(app);
+
+    const response = await book(app, {
+      meetingTypeId: meetingType.id,
+      start: "2026-11-13T06:00:00.000Z",
+      timeZone: " Europe/Berlin ",
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toMatchObject({ timeZone: "Europe/Berlin" });
+
+    const items = (await listBookings(app)).json().items as { timeZone?: string }[];
+    expect(items).toHaveLength(1);
+    expect(items[0]?.timeZone).toBe("Europe/Berlin");
+  });
+
+  it.each([
+    { title: "без поля", timeZone: undefined },
+    { title: "с пустой строкой", timeZone: "" },
+    { title: "с пробелами", timeZone: "   " },
+    { title: "с мусорным значением", timeZone: "Not/AZone" },
+    { title: "с не-строкой", timeZone: 42 },
+  ])("игнорирует пояс $title и всё равно занимает слот", async ({ timeZone }) => {
+    const app = buildApp();
+    const meetingType = await createMeetingType(app);
+    const payload = { meetingTypeId: meetingType.id, start: "2026-11-13T06:00:00.000Z" };
+
+    const response = await book(app, { ...payload, timeZone });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).not.toHaveProperty("timeZone");
+    expect((await listBookings(app)).json().items).toHaveLength(1);
+
+    const conflict = await book(app, payload);
+    expect(conflict.statusCode).toBe(409);
   });
 
   it("отвечает 404 MEETING_TYPE_NOT_FOUND на неизвестный тип", async () => {
@@ -459,6 +498,23 @@ describe("POST /api/bookings/{id}/cancel", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ ...created, status: "cancelled" });
+  });
+
+  it("сохраняет снимок пояса гостя при отмене", async () => {
+    const app = buildApp();
+    const meetingType = await createMeetingType(app);
+    const created = (
+      await book(app, {
+        meetingTypeId: meetingType.id,
+        start: "2026-11-13T06:00:00.000Z",
+        timeZone: "Europe/Berlin",
+      })
+    ).json() as Booking;
+
+    const response = await cancel(app, created.id);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ status: "cancelled", timeZone: "Europe/Berlin" });
   });
 
   it("отвечает 404 BOOKING_NOT_FOUND на неизвестную бронь", async () => {

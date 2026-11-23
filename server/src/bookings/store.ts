@@ -26,6 +26,8 @@ export interface Booking {
   start: string;
   end: string;
   guest: BookingGuest;
+  /** Снимок пояса гостя на момент записи (ADR-0007); отсутствует, если неизвестен. */
+  timeZone?: string;
 }
 
 /** Данные новой брони; конец интервала вычисляет доменная операция. */
@@ -33,6 +35,8 @@ interface NewBooking {
   meetingType: BookingMeetingTypeSnapshot;
   start: string;
   guest: BookingGuest;
+  /** Валидный IANA-пояс гостя; невалидный отсекается валидацией. */
+  timeZone?: string;
 }
 
 /** Хранилище броней в памяти процесса. */
@@ -91,6 +95,7 @@ export function createBookingsStore(seed: readonly Booking[] = []): BookingsStor
         start: slot.start,
         end: slot.end,
         guest: input.guest,
+        ...(input.timeZone === undefined ? {} : { timeZone: input.timeZone }),
       };
 
       bookings.push(booking);

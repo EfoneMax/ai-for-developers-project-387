@@ -26,7 +26,7 @@ export function registerBookingsRoutes(app: FastifyInstance, options: BookingsRo
       return reply.status(400).send(validationError(parsed.issues));
     }
 
-    const { meetingTypeId, start, guest } = parsed.value;
+    const { meetingTypeId, start, guest, timeZone } = parsed.value;
     const meetingType = options.meetingTypes.get(meetingTypeId);
     if (meetingType === undefined) {
       return reply.status(404).send(apiError("MEETING_TYPE_NOT_FOUND", "Тип встречи не найден"));
@@ -50,6 +50,7 @@ export function registerBookingsRoutes(app: FastifyInstance, options: BookingsRo
       },
       start,
       guest,
+      ...(timeZone === undefined ? {} : { timeZone }),
     });
 
     if (booking === undefined) {
