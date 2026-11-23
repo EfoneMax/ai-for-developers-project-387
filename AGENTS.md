@@ -1,0 +1,93 @@
+# AGENTS.md
+
+## Project
+
+Сервис бронирования встреч по мотивам Cal.com: гость выбирает свободный слот,
+владелец видит предстоящие записи. Данные пока хранятся в памяти процесса.
+
+Стек: TypeScript, Fastify, React + Vite, shadcn/ui, Vitest. Контракт описан
+на TypeSpec, из него собирается OpenAPI, из OpenAPI — TypeScript SDK фронтенда.
+
+## Commands
+
+Основные команды запускаются из корня репозитория через mise; npm-скрипты
+используются для вспомогательных задач.
+
+```bash
+mise run setup      # зависимости, OpenAPI и SDK, Git-хуки
+mise run dev        # API и фронтенд как daemons
+mise daemons status # состояние фоновых сервисов
+mise daemons logs   # логи сервисов
+mise daemons stop   # остановить сервисы
+mise run check      # быстрые проверки: генерация, линтеры, типы, тесты, сборка
+mise run check:e2e  # сборка и браузерные сценарии Playwright
+mise run check:all  # все проверки: check + check:e2e, один в один как в CI
+mise run fix        # безопасные автоисправления
+mise run lint
+mise run typecheck
+mise run test
+mise run build
+mise run generate   # TypeSpec → OpenAPI → TypeScript SDK
+npm run preview     # предпросмотр сборки после mise run build
+npm run ui:add -- button  # добавить компонент shadcn/ui
+```
+
+Адреса при `mise run dev`: API — `http://localhost:3000`, фронтенд —
+`http://localhost:5173`. Vite проксирует `/api` на Fastify.
+
+## Structure
+
+- `api/main.tsp` — контракт TypeSpec, единственный источник истины для API.
+- `api/openapi/openapi.yaml` — сгенерированный OpenAPI.
+- `web/src/client/` — сгенерированный TypeScript SDK.
+- `web/src/components/ui/` — компоненты shadcn/ui.
+- `server/src/app.ts` — сборка Fastify-приложения, `server/src/index.ts` — запуск.
+- `server/test/` — тесты Vitest.
+- `web/src/` — React-приложение.
+- `scripts/` — проверки целостности и commitlint.
+- `mise.toml` — версии инструментов, задачи, hooks и daemons.
+- `hk.pkl` — Git-хуки: линтер и форматтер, commitlint, проверки перед push.
+- `opencode.json` — MCP-серверы shadcn и Railway.
+- `.agents/skills/` и `skills-lock.json` — проектные скиллы и их версии.
+  Глобальные скиллы OpenCode могут перекрывать одноимённые проектные.
+- `CODING_STANDARDS.md` — правила ревью.
+
+## Rules
+
+- В начале шага получи критерии приёмки: если пользователь их не дал — спроси.
+  Зафиксируй их в постановке шага (issue или спека), а не в файле репозитория.
+  В конце шага пройди по ним пункт за пунктом.
+- Меняй API сначала в `api/main.tsp`, затем запускай `mise run generate` и
+  добавляй сгенерированные файлы в коммит. Не редактируй
+  `api/openapi/openapi.yaml` и `web/src/client/` вручную: `mise run check`
+  проверяет расхождение.
+- Компоненты shadcn добавляй через MCP или `npm run ui:add`, не копируй вручную.
+- Перед коммитом запускай `mise run check`; браузерные сценарии — отдельной
+  задачей `mise run check:e2e`; всё вместе — `mise run check:all`. CI вызывает
+  ту же `mise run check:all` одним job; pre-push выполняет только `check`.
+- Не отключай проверки и правила линтера, чтобы пройти CI. Исключения —
+  узкие, с причиной и решением человека. Стандарты ревью — в
+  `CODING_STANDARDS.md`.
+- Сообщения коммитов пиши по Conventional Commits. Перед формулировкой
+  используй скилл `conventional-commits`; типы и формат проверяет
+  `@commitlint/config-conventional`. Краткое описание в повелительном
+  наклонении, без точки в конце.
+- Каждый коммит ссылается на тикет, который продвигает: футер
+  `Refs: #<номер>` после пустой строки. Если коммит не относится к тикету
+  (процесс, документация), сошлись на спецификацию или родительский issue.
+- Не добавляй в репозиторий секреты и локальные файлы окружения.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues of `EfoneMax/ai-for-developers-project-387`. See `docs/agents/issue-tracker.md`. Исходная спецификация и решения первой части остаются в [`EfoneMax/ai-for-developers-project-386`](https://github.com/EfoneMax/ai-for-developers-project-386).
+
+### Triage labels
+
+Default triage vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root; created lazily.
+See `docs/agents/domain.md`.

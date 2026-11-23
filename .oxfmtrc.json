@@ -1,0 +1,11 @@
+{
+  "ignorePatterns": [
+    ".agents/**",
+    ".opencode/**",
+    ".github/workflows/hexlet-check.yml",
+    "api/openapi/**",
+    "web/src/client/**",
+    "**/node_modules/**",
+    "**/dist/**"
+  ]
+}

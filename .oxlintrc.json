@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    ".agents/**",
+    ".opencode/**",
+    "web/src/client/**",
+    "api/openapi/**",
+    "**/dist/**",
+    "**/node_modules/**"
+  ],
+  "categories": {
+    "correctness": "error"
+  },
+  "plugins": ["react", "jsx-a11y", "vitest"]
+}

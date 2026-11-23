@@ -1,0 +1,56 @@
+{
+  "name": "call-booking",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Сервис бронирования встреч по мотивам Cal.com",
+  "workspaces": [
+    "api",
+    "server",
+    "web"
+  ],
+  "type": "module",
+  "scripts": {
+    "setup": "npm install && npm run generate && hk install",
+    "generate": "npm run api:build && npm run client:generate",
+    "api:build": "npm run build --workspace api",
+    "client:generate": "npm run generate --workspace web",
+    "dev": "npm run generate && concurrently -n server,web -c green,magenta \"npm run dev:server\" \"npm run dev:web\"",
+    "dev:server": "npm run dev --workspace server",
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run generate && npm run build --workspace server && npm run build --workspace web",
+    "start": "npm run start --workspace server",
+    "preview": "npm run preview --workspace web",
+    "lint": "oxlint --deny-warnings . && oxfmt --check . && npm run lint:actions && npm run lint:agents && npm run lint:contract && npm run lint:deps && npm run lint:versions && npm run lint:shell && npm run lint:commits",
+    "lint:actions": "jactionlint .github/workflows/*.yml",
+    "lint:agents": "agnix --strict .",
+    "lint:contract": "vacuum lint api/openapi/openapi.yaml --no-banner --no-style",
+    "lint:deps": "knip",
+    "lint:versions": "syncpack lint",
+    "lint:shell": "shellcheck scripts/*.sh",
+    "lint:commits": "bash scripts/lint-commits.sh",
+    "check:generated": "bash scripts/check-generated.sh",
+    "fix": "oxlint --fix . && oxfmt --write .",
+    "format": "oxfmt --write .",
+    "ui:add": "shadcn add -c web",
+    "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace web",
+    "test": "npm run test --workspace server && npm run test --workspace web",
+    "check": "npm run generate && npm run check:generated && npm run lint && npm run typecheck && npm run test && npm run build --workspace server && npm run build --workspace web",
+    "check:all": "npm run check && npm run check:e2e",
+    "check:e2e": "npm run build && playwright test"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
+    "@playwright/test": "1.65.1",
+    "agnix": "0.61.0",
+    "concurrently": "10.0.7",
+    "knip": "6.44.2",
+    "oxfmt": "0.77.0",
+    "oxlint": "1.92.0",
+    "shadcn": "4.23.0",
+    "syncpack": "15.3.3"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
