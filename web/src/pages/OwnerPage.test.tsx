@@ -286,6 +286,52 @@ describe("кабинет владельца: предстоящие встреч
     expect(screen.queryByText(upcomingBooking.id)).toBeNull();
   });
 
+  it("показывает пояс и местное время гостя рядом с московским", async () => {
+    vi.mocked(listBookings).mockResolvedValue([{ ...upcomingBooking, timeZone: "Europe/Berlin" }]);
+
+    renderOwner();
+    await openUpcomingTab();
+
+    const row = (await screen.findByText("Анна Петрова")).closest("li");
+    if (row === null) {
+      throw new Error("Строка предстоящей встречи не найдена");
+    }
+    expect(within(row).getByText("пт, 13 ноября")).toBeTruthy();
+    expect(within(row).getByText(/09:00–09:45/)).toBeTruthy();
+    expect(
+      within(row).getByText("Гость выбирал: Europe/Berlin, пт, 13 нояб. 2026, 07:00–07:45"),
+    ).toBeTruthy();
+  });
+
+  it("не показывает строку пояса для московской записи", async () => {
+    vi.mocked(listBookings).mockResolvedValue([{ ...upcomingBooking, timeZone: "Europe/Moscow" }]);
+
+    renderOwner();
+    await openUpcomingTab();
+
+    expect(await screen.findByText("Анна Петрова")).toBeTruthy();
+    expect(screen.queryByText(/Гость выбирал/)).toBeNull();
+  });
+
+  it("не ломает список и не показывает строку для отсутствующего или невалидного пояса", async () => {
+    vi.mocked(listBookings).mockResolvedValue([
+      upcomingBooking,
+      {
+        ...upcomingBooking,
+        id: "22222222-2222-4222-8222-222222222222",
+        guest: { name: "Борис Иванов", email: "boris@example.com", comment: "Без пояса" },
+        timeZone: "Not/AZone",
+      },
+    ]);
+
+    renderOwner();
+    await openUpcomingTab();
+
+    expect(await screen.findByText("Анна Петрова")).toBeTruthy();
+    expect(screen.getByText("Борис Иванов")).toBeTruthy();
+    expect(screen.queryByText(/Гость выбирал/)).toBeNull();
+  });
+
   it("показывает пустое состояние, когда предстоящих встреч нет", async () => {
     renderOwner();
     await openUpcomingTab();

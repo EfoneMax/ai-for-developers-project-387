@@ -1,3 +1,5 @@
+import { isTimeZone } from "@/features/slots/time-zone";
+
 /** Часовой пояс владельца: по нему кабинет показывает время встреч. */
 const OWNER_TIME_ZONE = "Europe/Moscow";
 
@@ -10,6 +12,16 @@ function partsFormatter(timeZone: string, weekday: "short" | "long"): Intl.DateT
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
+    timeZone,
+  });
+}
+
+function shortDateFormatter(timeZone: string): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat("ru-RU", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
     timeZone,
   });
 }
@@ -57,4 +69,34 @@ export function formatIntervalInZone(start: string, end: string, timeZone: strin
   });
 
   return `${formatter.format(new Date(start))}–${formatter.format(new Date(end))}`;
+}
+
+/** Дата в поясе гостя с краткими днём и месяцем: «пт, 13 нояб. 2026». */
+export function formatGuestDayInZone(instant: string, timeZone: string): string {
+  const parts = shortDateFormatter(timeZone).formatToParts(new Date(instant));
+
+  return `${part(parts, "weekday")}, ${part(parts, "day")} ${part(parts, "month")} ${part(parts, "year")}`;
+}
+
+/**
+ * Строка «Гость выбирал: …» для кабинета владельца.
+ *
+ * Показывается только для сохранённого валидного пояса, отличного от
+ * московского: для Москвы, отсутствующего и невалидного значения строка
+ * не нужна, и рендер деградирует до прежнего вида. Пояс скрывается по
+ * IANA-id, а не по текущему смещению (ADR-0007).
+ */
+export function formatGuestTimeZoneLine(
+  timeZone: string | undefined,
+  start: string,
+  end: string,
+): string | undefined {
+  if (timeZone === undefined || !isTimeZone(timeZone) || timeZone === OWNER_TIME_ZONE) {
+    return undefined;
+  }
+
+  const day = formatGuestDayInZone(start, timeZone);
+  const interval = formatIntervalInZone(start, end, timeZone);
+
+  return `Гость выбирал: ${timeZone}, ${day}, ${interval}`;
 }

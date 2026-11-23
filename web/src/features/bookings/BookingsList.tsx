@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import CancelBookingDialog from "./CancelBookingDialog";
-import { formatMoscowDay, formatMoscowInterval } from "./format";
+import { formatGuestTimeZoneLine, formatMoscowDay, formatMoscowInterval } from "./format";
 import { useBookings } from "./useBookings";
 
 /** Скелетоны строк, пока предстоящие встречи грузятся. */
@@ -31,6 +31,8 @@ function BookingsSkeleton() {
 
 /** Строка предстоящей встречи: московское время, снимок типа, гость и действие. */
 function BookingRow({ booking, onCancel }: { booking: Booking; onCancel: () => void }) {
+  const guestTimeZoneLine = formatGuestTimeZoneLine(booking.timeZone, booking.start, booking.end);
+
   return (
     <li className="flex flex-col gap-4 rounded-2xl border border-white/60 bg-white/70 p-5 sm:flex-row sm:items-start sm:justify-between">
       <div className="sm:w-52">
@@ -53,6 +55,9 @@ function BookingRow({ booking, onCancel }: { booking: Booking; onCancel: () => v
         <p className="text-sm text-[#4b5a51]">{booking.guest.email}</p>
         {booking.guest.comment === undefined ? null : (
           <p className="mt-2 text-sm leading-relaxed text-[#4b5a51]">{booking.guest.comment}</p>
+        )}
+        {guestTimeZoneLine === undefined ? null : (
+          <p className="mt-2 text-sm leading-relaxed text-[#4b5a51]">{guestTimeZoneLine}</p>
         )}
       </div>
 
@@ -128,8 +133,8 @@ export default function BookingsList() {
       {state.status === "ready" && state.data.length > 0 ? (
         <>
           <p className="text-sm text-[#4b5a51]">
-            Время указано в московском поясе. Отменить встречу можно из строки — слот снова станет
-            доступен гостю.
+            Время указано в московском поясе. У записей из других поясов рядом показан пояс гостя и
+            его местное время. Отменить встречу можно из строки — слот снова станет доступен гостю.
           </p>
           <ul className="grid gap-3">
             {state.data.map((booking) => (
