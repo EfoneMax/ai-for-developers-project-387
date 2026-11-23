@@ -1,0 +1,94 @@
+name: audit
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+      timezone: Europe/Moscow
+  workflow_dispatch:
+    inputs:
+      training_finding:
+        description: "Учебная находка для демонстрации issue; не считается дефектом"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  # gh создаёт issue по находке и пишет итог в журнал #17.
+  # jactionlint ignore=excessive-permissions
+  issues: write
+  # OIDC нужен для обмена на токен GitHub App.
+  # jactionlint ignore=excessive-permissions
+  id-token: write
+
+concurrency:
+  group: audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Collect audit report
+        shell: bash
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          TRAINING_FINDING: ${{ github.event.inputs.training_finding }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p audit-report
+          node scripts/audit-app.mjs | tee audit-report/report.json
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: audit-report-${{ github.run_id }}
+          path: audit-report/report.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Run OpenCode audit
+        uses: anomalyco/opencode/github@77fc88c8ade8e5a620ebbe1197f3a572d29ae91a # latest, 2026-11-23
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        with:
+          model: deepseek/deepseek-flash
+          prompt: |
+            Ты аудитор приложения «Календарь звонков». Код не меняй, PR не создавай.
+
+            Прочитай `audit-report/report.json`. В нём есть appUrl, runUrl,
+            dataAvailable, checks, findings и trainingFinding. Артефакт отчёта:
+            `audit-report-${{ github.run_id }}`. Журнал аудита: issue #17.
+
+            Если `dataAvailable` равно false: не создавай issue по дефекту.
+            Оставь комментарий в #17: «Нет данных аудита: приложение недоступно,
+            дефект не подтверждён», приложи ссылку на прогон и причину из отчёта.
+            На этом закончи.
+
+            Иначе разбери каждый элемент `findings`.
+
+            Для каждой находки:
+            1. Найди уже открытые issue по той же проблеме:
+               `gh issue list --state open --json number,title,body,labels --search "<короткий текст находки>"`.
+               Просмотри и заголовки, не полагайся только на поиск.
+            2. Если задача уже есть и новых сведений нет — не создавай дубль,
+               сошлись на неё в итоговом комментарии.
+            3. Если задачи нет — создай отдельный issue:
+               - заголовок `audit: <короткая проблема>`;
+               - тело: проблема, предлагаемое действие, ссылка на прогон и артефакт,
+                 appUrl и дата отчёта;
+               - для `severity: training` добавь метку `training` и явно напиши,
+                 что это учебная находка, а не подтверждённый дефект приложения;
+               - для `severity: app` дополнительную метку не добавляй;
+               - укажи связь с журналом #17.
+            4. В конце оставь один комментарий в #17: перечень находок, созданные
+               и уже существующие issue, ссылки на прогон и артефакт. Если находок
+               нет — напиши «Находок нет» и приложи те же ссылки.

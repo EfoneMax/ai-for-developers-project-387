@@ -49,6 +49,8 @@ npm run ui:add -- button  # добавить компонент shadcn/ui
 - `.github/workflows/opencode-triage.yml` — автотриаж новых обращений по скиллу `triage`; готовые тикеты с `ready-for-agent` пропускаются.
 - `.github/workflows/opencode-review.yml` — независимое авторевью PR по `REVIEW.md`; только комментирует, код не меняет.
 - `.github/workflows/pr-e2e.yml` — браузерные сценарии из head SHA PR с трейсами и артефактом `e2e-<sha>`.
+- `.github/workflows/audit.yml` — ежедневный аудит по расписанию и ручной запуск; отчёт артефактом, находки — issue.
+- `scripts/audit-app.mjs` — сбор отчёта о health, каталоге типов и страницах приложения.
 - `REVIEW.md` — критерии ревью календаря.
 - `mise.toml` — версии инструментов, задачи, hooks и daemons.
 - `hk.pkl` — Git-хуки: линтер и форматтер, commitlint, проверки перед push.
