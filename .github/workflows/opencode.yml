@@ -1,5 +1,7 @@
 name: opencode
 
+run-name: opencode pr-${{ github.event.issue.number || github.event.pull_request.number }}
+
 on:
   # Событие запускает агент только по команде доверенного автора: фильтр в job.if ниже.
   # jactionlint ignore=dangerous-triggers
@@ -10,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   # gh публикует спецификацию и тикеты; job.if пропускает только доверенных авторов.
   # jactionlint ignore=excessive-permissions
   issues: write
@@ -30,13 +33,57 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
+      - name: Check pull request run budget
+        id: budget
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          IS_PR: ${{ github.event.issue.pull_request != null || github.event_name == 'pull_request_review_comment' }}
+          LIMIT: "4"
+        run: |
+          echo "allowed=true" >> "$GITHUB_OUTPUT"
+
+          if [ "$IS_PR" != "true" ]; then
+            echo "Бюджет действует только для pull request"
+            exit 0
+          fi
+
+          used="$(gh api "repos/${REPO}/actions/workflows/opencode.yml/runs?per_page=100" \
+            | jq --arg title "opencode pr-${NUMBER}" --arg id "$RUN_ID" \
+              '[.workflow_runs[] | select(.display_title == $title and (.id | tostring) != $id) | .run_attempt] | add // 0')"
+          total=$((used + RUN_ATTEMPT))
+
+          if [ "$total" -le "$LIMIT" ]; then
+            echo "Использовано попыток: ${total} из ${LIMIT}"
+            exit 0
+          fi
+
+          sha="$(gh pr view "$NUMBER" --json headRefOid --jq .headRefOid 2>/dev/null || echo "${GITHUB_SHA:-unknown}")"
+          echo "allowed=false" >> "$GITHUB_OUTPUT"
+          gh issue comment "$NUMBER" --body "$(cat <<EOF
+          **limit_exhausted** — бюджет запусков агента на этот PR исчерпан.
+
+          Лимит: ${LIMIT} попыток. Последний SHA: \`${sha}\`.
+          Нужен человек: автоматические исправления остановлены.
+
+          [Лог прогона](${RUN_URL})
+          EOF
+          )"
+
       - name: Checkout repository
+        if: steps.budget.outputs.allowed == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
           persist-credentials: false
 
       - name: Run OpenCode
+        if: steps.budget.outputs.allowed == 'true'
         uses: anomalyco/opencode/github@77fc88c8ade8e5a620ebbe1197f3a572d29ae91a # latest, 2026-11-23
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}

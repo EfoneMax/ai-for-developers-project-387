@@ -127,6 +127,28 @@ Playwright артефактом. Pre-push hook выполняет только `
 - **Ограничения:** `timeout-minutes: 15`, `concurrency` по номеру issue без отмены уже идущего прогона (`cancel-in-progress: false`), права `contents: read`, `issues: write` и `id-token: write`; у checkout `persist-credentials: false`.
 - **Результат:** комментарий от приложения в issue, метки трекера и прогон в **Actions → opencode-triage**.
 
+### Авторевью pull request
+
+- **Файл:** [`.github/workflows/opencode-review.yml`](.github/workflows/opencode-review.yml).
+- **Событие:** `pull_request: [opened, synchronize, reopened, ready_for_review]`. Черновики пропускаются.
+- **Кто получает ревью:** PR из ветки этого же репозитория от `OWNER`, `MEMBER`, `COLLABORATOR` или от `opencode-agent[bot]`. PR из fork не получают секрет модели.
+- **Как работает:** отдельный прогон обычного OpenCode CLI (`opencode run`, версия закреплена в `mise.toml`) готовит текст, следующий шаг публикует его через `gh pr comment`. Ревью не меняет код и не продолжает сессию реализации.
+- **Критерии:** [`REVIEW.md`](REVIEW.md), спецификация #7 и согласование в #6, diff PR и результаты CI. Замечание содержит файл, строку, условие ошибки и последствие.
+- **Права:** `contents`, `issues`, `actions`, `checks`, `statuses` — read; `pull-requests: write` только для комментария.
+- **Ограничения:** `timeout-minutes: 20`, `concurrency` по номеру PR с отменой устаревшего ревью.
+
+### Браузерная проверка PR
+
+- **Файл:** [`.github/workflows/pr-e2e.yml`](.github/workflows/pr-e2e.yml).
+- **Что делает:** собирает приложение из точного `pull_request.head.sha`, прогоняет Playwright с `--trace on` и загружает артефакт `e2e-<sha>` с трейсами, HTML-отчётом и файлом `artifact-sha.txt`.
+- **Зачем:** проверяющий перед мержем сверяет SHA артефакта с текущим head PR и проходит основной и соседний сценарии спецификации.
+
+### Бюджет запусков агента на PR
+
+- В `opencode.yml` перед вызовом модели выполняется шаг бюджета: он считает прошлые попытки по истории Actions (`run-name` с номером PR и `run_attempt`), а не по комментариям.
+- Лимит — 4 попытки на PR. Считаются все запуски по `/oc` и `/opencode`, включая отмены, таймауты и Re-run.
+- После исчерпания шаг публикует `limit_exhausted` с последним SHA и ссылкой на лог; модель не вызывается. Бюджет действует только для pull request, не для issue.
+
 ## Деплой
 
 Публичная ссылка: **https://call-booking-production.up.railway.app**

@@ -3,6 +3,7 @@ experimental = true
 
 [tools]
 node = "24.22.2"
+opencode = "1.19.6"
 hk = "2.11.1"
 pitchfork = "2.33.1"
 jactionlint = "2.5.0"

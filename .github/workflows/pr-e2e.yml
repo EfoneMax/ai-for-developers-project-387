@@ -1,0 +1,60 @@
+name: pr-e2e
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-e2e-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    if: |
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout pull request head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+
+      - run: npm ci
+
+      - name: Install Chromium
+        run: npx --no-install playwright install --with-deps --only-shell chromium
+
+      - name: Record exact head SHA
+        run: |
+          {
+            echo "PR: #${{ github.event.pull_request.number }}"
+            echo "pull_request.head.sha: ${{ github.event.pull_request.head.sha }}"
+            echo "git rev-parse HEAD: $(git rev-parse HEAD)"
+          } | tee artifact-sha.txt
+
+      - name: Build
+        run: npm run build
+
+      - name: Run browser scenarios with traces
+        run: npx playwright test --trace on
+
+      - name: Upload browser artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: e2e-${{ github.event.pull_request.head.sha }}
+          path: |
+            test-results/
+            playwright-report/
+            artifact-sha.txt
+          if-no-files-found: warn
+          retention-days: 14
