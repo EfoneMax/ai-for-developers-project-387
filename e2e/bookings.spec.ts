@@ -117,6 +117,17 @@ test.describe("гость в другом часовом поясе", () => {
     await expect(row).toContainText(guest.comment);
     await expect(row).toContainText(/\d{2}:\d{2}–\d{2}:\d{2}/);
 
+    const localTime = (instant: string) =>
+      new Intl.DateTimeFormat("ru-RU", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+        timeZone: "Europe/Berlin",
+      }).format(new Date(instant));
+
+    await expect(row).toContainText("Гость выбирал: Europe/Berlin");
+    await expect(row).toContainText(`${localTime(slot.start)}–${localTime(slot.end)}`);
+
     await page.getByRole("button", { name: `Действия: встреча с ${guest.name}` }).click();
     await page.getByRole("menuitem", { name: "Отменить" }).click();
 
