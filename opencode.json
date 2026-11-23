@@ -12,5 +12,12 @@
       }
     }
   },
+  "permissions": [
+    {
+      "action": "external_directory",
+      "resource": "*",
+      "effect": "deny"
+    }
+  ],
   "$schema": "https://opencode.ai/config.json"
 }

@@ -10,6 +10,9 @@ on:
 
 permissions:
   contents: read
+  # gh публикует спецификацию и тикеты; job.if пропускает только доверенных авторов.
+  # jactionlint ignore=excessive-permissions
+  issues: write
   # OIDC нужен для обмена на токен GitHub App; job.if отсекает недоверенных авторов.
   # jactionlint ignore=excessive-permissions
   id-token: write
@@ -37,6 +40,8 @@ jobs:
         uses: anomalyco/opencode/github@77fc88c8ade8e5a620ebbe1197f3a572d29ae91a # latest, 2026-11-23
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          # gh нужен скиллам to-spec и to-tickets, чтобы публиковать issues.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: deepseek/deepseek-flash
           mentions: /oc,/opencode
