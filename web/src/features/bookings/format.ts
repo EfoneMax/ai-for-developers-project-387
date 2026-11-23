@@ -30,6 +30,19 @@ function part(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTyp
   return parts.find((item) => item.type === type)?.value ?? "";
 }
 
+/**
+ * Канонический IANA-id для валидной зоны: `Intl` принимает
+ * `europe/moscow` и приводит его к `Europe/Moscow`.
+ */
+function canonicalTimeZone(timeZone: string): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone }).resolvedOptions().timeZone;
+}
+
+/** Совпадает ли валидный пояс с московским после приведения к канону IANA. */
+function isOwnerTimeZone(timeZone: string): boolean {
+  return canonicalTimeZone(timeZone) === canonicalTimeZone(OWNER_TIME_ZONE);
+}
+
 /** Московская дата встречи, например «чт, 12 ноября». */
 export function formatMoscowDay(instant: string): string {
   const parts = partsFormatter(OWNER_TIME_ZONE, "short").formatToParts(new Date(instant));
@@ -91,7 +104,7 @@ export function formatGuestTimeZoneLine(
   start: string,
   end: string,
 ): string | undefined {
-  if (timeZone === undefined || !isTimeZone(timeZone) || timeZone === OWNER_TIME_ZONE) {
+  if (timeZone === undefined || !isTimeZone(timeZone) || isOwnerTimeZone(timeZone)) {
     return undefined;
   }
 

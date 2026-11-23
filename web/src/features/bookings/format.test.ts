@@ -79,4 +79,22 @@ describe("строка пояса гостя в кабинете владель�
     expect(formatGuestTimeZoneLine(undefined, start, end)).toBeUndefined();
     expect(formatGuestTimeZoneLine("Not/AZone", start, end)).toBeUndefined();
   });
+
+  it("скрывает строку для московского пояса в любом регистре", () => {
+    const start = "2026-11-13T06:00:00.000Z";
+    const end = "2026-11-13T06:30:00.000Z";
+
+    expect(formatGuestTimeZoneLine("Europe/Moscow", start, end)).toBeUndefined();
+    expect(formatGuestTimeZoneLine("europe/moscow", start, end)).toBeUndefined();
+  });
+
+  it("показывает строку для не-московского пояса в нижнем регистре", () => {
+    expect(
+      formatGuestTimeZoneLine(
+        "europe/berlin",
+        "2026-11-13T06:00:00.000Z",
+        "2026-11-13T06:30:00.000Z",
+      ),
+    ).toBe("Гость выбирал: europe/berlin, пт, 13 нояб. 2026, 07:00–07:30");
+  });
 });
