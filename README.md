@@ -102,7 +102,7 @@ Playwright артефактом. Pre-push hook выполняет только `
 - **Результаты:** ответ агентом-приложением в issue или PR и прогон в **Actions → opencode**.
 - **Действие:** `anomalyco/opencode/github` закреплён на коммите `77fc88c` (снимок 2026-11-23), раннер `ubuntu-latest`, checkout глубиной 1.
 - **Ограничение приложения:** GitHub App не имеет права `workflows`, поэтому изменения в `.github/workflows/` агент не пушит. Такие файлы применяются человеком или локальным агентом после ревью; остальные изменения агент делает сам.
-- **Ограничения запуска:** `timeout-minutes: 25`, `concurrency` по номеру issue/PR без отмены уже идущего прогона (`cancel-in-progress: false`), права `contents: read`, `issues: write` и `id-token: write`, у checkout `persist-credentials: false`. Запись комментариев и ветки идёт через токен GitHub App из OIDC, а не через `GITHUB_TOKEN`.
+- **Ограничения запуска:** `timeout-minutes: 25`, `concurrency` по номеру issue/PR без отмены уже идущего прогона (`cancel-in-progress: false`), права `contents: read`, `issues: write`, `pull-requests: write` и `id-token: write`, у checkout `persist-credentials: false`. Запись комментариев и ветки идёт через токен GitHub App из OIDC; отчёт `limit_exhausted` публикуется через `gh pr comment`.
 
 Примеры вызова:
 
