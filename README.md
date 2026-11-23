@@ -97,9 +97,11 @@ Playwright артефактом. Pre-push hook выполняет только `
 - **Команды:** `/oc` и `/opencode` (заданы явно в `mentions`).
 - **Кто может запускать:** только `OWNER`, `MEMBER` и `COLLABORATOR`; комментарии ботов и недоверенных авторов игнорируются. PR из fork не получают секреты.
 - **Модель:** `deepseek/deepseek-flash`; ключ хранится в GitHub Secrets как `DEEPSEEK_API_KEY` и в репозиторий не попадает.
+- **Контекст проекта:** агент читает `AGENTS.md` и `docs/agents/`, ведёт задачи в `EfoneMax/ai-for-developers-project-387` (см. `docs/agents/issue-tracker.md`) и проверяет правки командой `mise run check`; полный прогон, как в CI, — `mise run check:all`.
 - **Назначение:** разбор issue и обсуждений, работа по скиллам из `.agents/skills/` (`to-spec`, `to-tickets`, `implement-spec`, `code-review`), правки в ветке PR.
 - **Результаты:** ответ агентом-приложением в issue или PR и прогон в **Actions → opencode**.
-- **Ограничения запуска:** `timeout-minutes: 25`, `concurrency` по номеру issue/PR, права `contents: read` и `id-token: write`, у checkout `persist-credentials: false`.
+- **Действие:** `anomalyco/opencode/github` закреплён на коммите `77fc88c` (снимок 2026-11-23), раннер `ubuntu-latest`, checkout глубиной 1.
+- **Ограничения запуска:** `timeout-minutes: 25`, `concurrency` по номеру issue/PR без отмены уже идущего прогона (`cancel-in-progress: false`), права `contents: read` и `id-token: write`, у checkout `persist-credentials: false`. Запись комментариев и ветки идёт через токен GitHub App из OIDC, а не через `GITHUB_TOKEN`.
 
 Примеры вызова:
 
